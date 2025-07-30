@@ -84,8 +84,10 @@ class ConsciousnessAmplifier(LogicFieldOperator):
     def __init__(self, amplification_factor: float = 1.1):
         self.amplification_factor = amplification_factor
     
-    def apply(self, field_state: FiveTuple, max_consciousness: float = 1.0) -> FiveTuple:
+    def apply(self, field_state: FiveTuple, **kwargs) -> FiveTuple:
         """Amplify consciousness while respecting maximum bounds."""
+        max_consciousness = kwargs.get("max_consciousness", 1.0)
+        
         new_consciousness = min(
             field_state.consciousness * self.amplification_factor,
             max_consciousness
@@ -103,14 +105,30 @@ class ConsciousnessAmplifier(LogicFieldOperator):
 class RealityModifier(LogicFieldOperator):
     """Modifies reality state components of the logic field."""
     
-    def __init__(self, modification_matrix: np.ndarray):
-        self.modification_matrix = modification_matrix
+    def __init__(self, modification_matrix: Optional[np.ndarray] = None):
+        if modification_matrix is not None:
+            self.modification_matrix = modification_matrix
+        else:
+            # Default 2x2 matrix for standard reality vectors
+            self.modification_matrix = np.array([[0.1, 0.05], [0.05, 0.1]])
     
-    def apply(self, field_state: FiveTuple, intensity: float = 1.0) -> FiveTuple:
+    def apply(self, field_state: FiveTuple, **kwargs) -> FiveTuple:
         """Apply reality modification with specified intensity."""
-        modified_reality = field_state.reality + (
-            self.modification_matrix @ field_state.reality * intensity
-        )
+        intensity = kwargs.get("intensity", 1.0)
+        
+        # Ensure matrix dimensions match reality vector
+        reality_size = len(field_state.reality)
+        
+        if self.modification_matrix.shape[1] != reality_size:
+            # Create a compatible matrix
+            compatible_matrix = np.eye(reality_size) * 0.1
+            if self.modification_matrix.shape[0] <= reality_size and self.modification_matrix.shape[1] <= reality_size:
+                compatible_matrix[:self.modification_matrix.shape[0], :self.modification_matrix.shape[1]] = self.modification_matrix
+            modified_reality = field_state.reality + (compatible_matrix @ field_state.reality * intensity)
+        else:
+            modified_reality = field_state.reality + (
+                self.modification_matrix @ field_state.reality * intensity
+            )
         
         return FiveTuple(
             space=field_state.space.copy(),
