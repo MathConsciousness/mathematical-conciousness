@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  mathematical-framework:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mathematical-consciousness-system
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
+      - ENVIRONMENT=production
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - consciousness-network
+
+  verification:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: deployment-verification
+    depends_on:
+      - mathematical-framework
+    environment:
+      - PYTHONPATH=/app
+      - API_URL=http://mathematical-framework:8000
+    command: ["python", "verify_deployment.py"]
+    networks:
+      - consciousness-network
+    profiles:
+      - verification
+
+networks:
+  consciousness-network:
+    driver: bridge
